@@ -14,55 +14,63 @@ import java.util.HashMap;
 
 public class DNA {
 
+    private static final long p = 9223372036854775783L;
+    private static long radixSubtract = 0;
+
     /**
      * TODO: Complete this function, STRCount(), to return longest consecutive run of STR in sequence.
      */
     public static int STRCount(String sequence, String STR) {
-        HashMap<Character, Integer> lettersToVal = new HashMap<>();
-        lettersToVal.put('A', 1);
-        lettersToVal.put('C', 2);
-        lettersToVal.put('T', 3);
-        lettersToVal.put('G', 4);
         int STRlength = STR.length();
-        int sequenceLength = sequence.length();
-        int STRvalue = 0;
-        int value = 0;
-        for (int i = 0; i < STRlength; i++) {
-            STRvalue += (int) (lettersToVal.get(STR.charAt(i)) * Math.pow(10, STRlength - i - 1));
-            value += (int) (lettersToVal.get(sequence.charAt(i)) * Math.pow(10, STRlength - i - 1));
-        }
-        System.out.println(STR);
-        System.out.println(STRvalue);
-        System.out.println(sequence.substring(0, STRlength));
-        System.out.println(value);
-        int length = sequenceLength - STRlength;
-        int index = 1;
-        int count = 0;
-        ArrayList<Integer> attempts = new ArrayList<>();
-        while (index < length) {
-            if (value == STRvalue) {
-                count++;
-                value = 0;
-                for (int i = 0; i < STRlength; i++) {
-                    value += (int) (lettersToVal.get(sequence.charAt(index + i - 1)) * Math.pow(10, STRlength - i - 1));
-                }
-                System.out.println(sequence.substring(index, STRlength));
-                System.out.println(value);
-            } else {
-                if (count > 0) attempts.add(count);
-                count = 0;
-                value *= 10;
-                value -= (int) (lettersToVal.get(sequence.charAt(index)) * Math.pow(10, STRlength));
-                value += lettersToVal.get(sequence.charAt(index + STRlength));
-                index++;
+        radixSubtract = (long) (Math.pow(STRlength, STRlength - 1) % p);
+        int seqLength = sequence.length();
+        long STRhash = hash(STR, STRlength);
+        long seqHash = hash(sequence.substring(0, STRlength), STRlength);
+        int i = 1;
+        int counter = 0;
+        int test = 0;
+        while (i != seqLength) {
+            if (seqHash == STRhash) {
+                test = STRcounter(sequence, i, seqHash, STRhash, STRlength);
+                if (test > counter) counter = test;
+                i += test * STRlength;
+            }
+            else {
+                i++;
+                seqHash = updateHash(sequence, i, seqHash, STRhash, STRlength);
+                if (seqHash == 0) return counter;
             }
         }
 
-        int maxLength = 0;
+        return counter;
+    }
 
-        for (int attempt : attempts)
-            if (attempt > maxLength) maxLength = attempt;
+    private static long hash(String t, int STRlength) {
+        long hash = 0;
+        int m = t.length();
+        for (int i = 0; i < m; i++) {
+            hash = (hash * STRlength + t.charAt(i)) % p;
+        }
+        return hash;
+    }
 
-        return maxLength;
+    private static long updateHash(String t, int i, long seqHash, long STRhash, int STRlength) {
+        seqHash = (seqHash - (t.charAt(i - 1) * radixSubtract % p + p) % p) % p;
+        seqHash = (seqHash * STRlength + t.charAt(i + STRlength - 1)) % p;
+        return seqHash;
+    }
+
+    private static int STRcounter(String t, int i, long seqHash, long STRhash, int STRlength) {
+        int counter = 0;
+
+        while (i + STRlength <= t.length() && seqHash == STRhash) {
+            counter++;
+            i += STRlength;
+            if (i + STRlength <= t.length()) {
+                seqHash = updateHash(t, i, seqHash, STRhash, STRlength);
+            }
+        }
+
+        return counter;
     }
 }
