@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-import java.util.HashMap;
 /**
  * DNA
  * <p>
@@ -22,14 +20,18 @@ public class DNA {
      */
     public static int STRCount(String sequence, String STR) {
         int STRlength = STR.length();
-        radixSubtract = (long) (Math.pow(STRlength, STRlength - 1) % p);
+        radixSubtract = modPow(STRlength, STRlength - 1);
         int seqLength = sequence.length();
-        long STRhash = hash(STR, STRlength);
+        long STRhash = hash(STR, STRlength);;
         long seqHash = hash(sequence.substring(0, STRlength), STRlength);
+        System.out.println(STR);
+        System.out.println(STRhash);
+        System.out.println(sequence.substring(0, STRlength));
+        System.out.println(seqHash);
         int i = 1;
         int counter = 0;
         int test = 0;
-        while (i != seqLength) {
+        while (i < seqLength - 1) {
             if (seqHash == STRhash) {
                 test = STRcounter(sequence, i, seqHash, STRhash, STRlength);
                 if (test > counter) counter = test;
@@ -45,10 +47,18 @@ public class DNA {
         return counter;
     }
 
+    private static long modPow(long radix, long power) {
+        while (power > 0) {
+            radix *= radix;
+            power--;
+        }
+        return radix % p;
+    }
+
     private static long hash(String t, int STRlength) {
         long hash = 0;
         int m = t.length();
-        for (int i = 0; i < m; i++) {
+        for (int i = 0; i < STRlength; i++) {
             hash = (hash * STRlength + t.charAt(i)) % p;
         }
         return hash;
@@ -56,6 +66,7 @@ public class DNA {
 
     private static long updateHash(String t, int i, long seqHash, long STRhash, int STRlength) {
         seqHash = (seqHash - (t.charAt(i - 1) * radixSubtract % p + p) % p) % p;
+        if (i + STRlength - 1 > t.length() - 1) return 0;
         seqHash = (seqHash * STRlength + t.charAt(i + STRlength - 1)) % p;
         return seqHash;
     }
