@@ -12,76 +12,51 @@
 
 public class DNA {
 
-    private static final long p = 9223372036854775783L;
-    private static long radixSubtract = 0;
+    // Define a large prime number p greater than 10^20 for Monte Carlo algo success
+    private static final long P = 9223372036854775783L;
 
-    /**
-     * TODO: Complete this function, STRCount(), to return longest consecutive run of STR in sequence.
-     */
+
+    // Function to return the longest consecutive run of STR in sequence using hashing.
     public static int STRCount(String sequence, String STR) {
-        int STRlength = STR.length();
-        radixSubtract = modPow(STRlength, STRlength - 1);
+        int maxCount = 0;
+        int R = STR.length();
         int seqLength = sequence.length();
-        long STRhash = hash(STR, STRlength);;
-        long seqHash = hash(sequence.substring(0, STRlength), STRlength);
-        System.out.println(STR);
-        System.out.println(STRhash);
-        System.out.println(sequence.substring(0, STRlength));
-        System.out.println(seqHash);
-        int i = 1;
-        int counter = 0;
-        int test = 0;
-        while (i < seqLength - 1) {
-            if (seqHash == STRhash) {
-                test = STRcounter(sequence, i, seqHash, STRhash, STRlength);
-                if (test > counter) counter = test;
-                i += test * STRlength;
+
+        // Calculate the hash of the STR modulo P using Horner's method
+        long strHash = computeHash(STR, R);
+
+        // Check every position in the sequence
+        for (int i = 0; i <= seqLength - R; i++) {
+            int currentCount = 0;
+            int j = i;
+
+            // Check for consecutive occurrences of STR using hash comparison
+            while (j <= seqLength - R) {
+                String substring = sequence.substring(j, j + R);
+                long substringHash = computeHash(substring, R);
+
+                // Compare hashes first
+                if (substringHash == strHash && substring.equals(STR)) {
+                    currentCount++;
+                    // Move to the next potential STR occurrence
+                    j += R;
+                } else {
+                    // Exit the inner loop if not a match
+                    break;
+                }
             }
-            else {
-                i++;
-                seqHash = updateHash(sequence, i, seqHash, STRhash, STRlength);
-                if (seqHash == 0) return counter;
-            }
+            maxCount = Math.max(maxCount, currentCount);
         }
 
-        return counter;
+        return maxCount;
     }
 
-    private static long modPow(long radix, long power) {
-        while (power > 0) {
-            radix *= radix;
-            power--;
-        }
-        return radix % p;
-    }
-
-    private static long hash(String t, int STRlength) {
+    // Computes a hash for a given string using Horner's method with base R.
+    private static long computeHash(String t, int R) {
         long hash = 0;
-        int m = t.length();
-        for (int i = 0; i < STRlength; i++) {
-            hash = (hash * STRlength + t.charAt(i)) % p;
+        for (int i = 0; i < R; i++) {
+            hash = (hash * R + t.charAt(i)) % P;
         }
         return hash;
-    }
-
-    private static long updateHash(String t, int i, long seqHash, long STRhash, int STRlength) {
-        seqHash = (seqHash - (t.charAt(i - 1) * radixSubtract % p + p) % p) % p;
-        if (i + STRlength - 1 > t.length() - 1) return 0;
-        seqHash = (seqHash * STRlength + t.charAt(i + STRlength - 1)) % p;
-        return seqHash;
-    }
-
-    private static int STRcounter(String t, int i, long seqHash, long STRhash, int STRlength) {
-        int counter = 0;
-
-        while (i + STRlength <= t.length() && seqHash == STRhash) {
-            counter++;
-            i += STRlength;
-            if (i + STRlength <= t.length()) {
-                seqHash = updateHash(t, i, seqHash, STRhash, STRlength);
-            }
-        }
-
-        return counter;
     }
 }
